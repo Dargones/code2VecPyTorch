@@ -1,0 +1,5 @@
+logdir/*
+main.log*
+.ipynb_checkpoints/*
+__pycache__/*
+.idea/*

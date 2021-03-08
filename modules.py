@@ -2,7 +2,7 @@ import torch as tt
 import torch.nn as nn
 import torch.nn.functional as F
 
-# TODO initialize weigths as in code2vec
+# TODO: Code2vec uses "normalized initialization" from Glorot and Bengio (2010). Should\Could this be replicated here?
 
 
 class AttentionModule(nn.Module):
