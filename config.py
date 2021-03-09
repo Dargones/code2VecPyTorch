@@ -24,4 +24,4 @@ class Config:
     # Logging constants
     LOG_FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
     LOG_FILE = "main.log"
-    LOG_LEVEL = logging.DEBUG
+    LOG_LEVEL = logging.INFO

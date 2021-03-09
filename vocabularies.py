@@ -27,6 +27,7 @@ class Vocab:
         self.prune = prune
         self.filename = filename
         self.keys = Vocab.__prune(freqs, prune)
+        self.total_tokens = sum([freqs[key] for key in self.keys])
         self.keys += [Vocab.OOV]
         self.key_to_ind = {key: i for i, key in enumerate(self.keys)}
         Vocab.VOCABS[str(self)] = self

@@ -1,6 +1,7 @@
 from torch.utils.data import IterableDataset, Dataset
 import torch as tt
 import random
+import tqdm
 
 from vocabularies import Vocab
 from config import Config
@@ -52,6 +53,9 @@ class AbstractC2VDataset(Dataset):
         target = tt.tensor(self.target_vocab.get_ind(contexts[0]), dtype=tt.long)
         return contexts, starts, paths, ends, properties, mask, target
 
+    def filterOOV(self, data):
+        return self.target_vocab.get_key(data[1].item()) != Vocab.OOV
+
     def __iter__(self):
         pass
 
@@ -61,21 +65,46 @@ class AbstractC2VDataset(Dataset):
 
 class BaseC2VDataset(AbstractC2VDataset):
 
-    def __init__(self, filename, token_vocab, path_vocab, target_vocab):
-        super().__init__(filename, token_vocab, path_vocab, target_vocab)
-        # TODO
+    def __init__(self, filename, token_vocab, path_vocab, target_vocab, properties=0, skipOOV=False):
+        super().__init__(filename, token_vocab, path_vocab, target_vocab, properties)
+        self.skipOOV = skipOOV
+        self.X = tt.zeros((len(self), 4 + properties, Config.MAX_CONTEXTS), dtype=tt.float)
+        self.Y = tt.zeros(len(self), dtype=tt.long)
+        i = 0
+        with open(filename) as file:
+            for line in tqdm.tqdm(file, total=len(self)):
+                x, y = self.vectorize(line)
+                if not skipOOV or self.filterOOV((x, y)):
+                    self.X[i] = x
+                    self.Y[i] = y
+                    i += 1
 
     def __getitem__(self, index):
-        pass
-        # TODO
+        return self.X[index], self.Y[index]
+
+    def __len__(self):
+        if not self.skipOOV:
+            return super(BaseC2VDataset, self).__len__()
+        return self.target_vocab.total_tokens
 
 
 class IterableBaseC2VDataset(AbstractC2VDataset, IterableDataset):
 
+    def __init__(self, filename, token_vocab, path_vocab, target_vocab, properties=0, skipOOV=False):
+        super(IterableBaseC2VDataset, self).__init__(filename, token_vocab, path_vocab, target_vocab, properties)
+        self.skipOOV = skipOOV
+
     def __iter__(self):
         file_iterator = open(self.filename)
         mapped_iterator = map(self.vectorize, file_iterator)
+        if self.skipOOV:
+            return filter(self.filterOOV, mapped_iterator)
         return mapped_iterator
+
+    def __len__(self):
+        if not self.skipOOV:
+            return super(IterableBaseC2VDataset, self).__len__()
+        return self.target_vocab.total_tokens
 
 
 class ShuffleDataset(IterableDataset):

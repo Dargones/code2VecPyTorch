@@ -2,6 +2,10 @@ from vocabularies import Vocab
 from catalyst.dl import BatchMetricCallback
 import torch as tt
 
+from log_tools import get_logger
+
+logger = get_logger(__name__)
+
 
 def get_metrics_dataset(prediction_generator, data_generator, vocab):
     """
@@ -62,6 +66,7 @@ def get_tp_fp_fn(prediction, target, vocab):
     :return:            (tp, fp, fn)
     """
     if target == vocab.get_ind(Vocab.OOV):
+        logger.debug("target=%s, prediction=%s" % (vocab.get_key(target), vocab.get_key(prediction)))
         return 0, 0, 1  # From code2vec paper: "An unknown sub-token in the test label is counted as a false negative,
                         # therefore automatically hurting recall." TODO: double check that this is intended behavior
     target_tokens = set(vocab.get_key(target).split("|"))
@@ -69,6 +74,7 @@ def get_tp_fp_fn(prediction, target, vocab):
     tp = len([x for x in prediction_tokens if x in target_tokens])
     fp = len(prediction_tokens) - tp
     fn = len(target_tokens) - tp
+    logger.debug("target=%s, prediction=%s, tp=%d, fp=%d, fn=%d" % (vocab.get_key(target), vocab.get_key(prediction), tp, fp, fn))
     return tp, fp, fn
 
 
